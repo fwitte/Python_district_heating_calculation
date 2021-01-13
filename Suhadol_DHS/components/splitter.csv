@@ -1,0 +1,17 @@
+label;cp;busses;bus_param;bus_P_ref;bus_char;bus_base;design;offdesign;design_path;local_design;local_offdesign;num_out;num_out_set
+K3_splitter;splitter;[];[];[];[];[];[];[];nan;False;False;2;True
+K4_splitter;splitter;[];[];[];[];[];[];[];nan;False;False;2;True
+K14_splitter;splitter;[];[];[];[];[];[];[];nan;False;False;2;True
+K19_splitter;splitter;[];[];[];[];[];[];[];nan;False;False;2;True
+K20_splitter;splitter;[];[];[];[];[];[];[];nan;False;False;2;True
+K23_splitter;splitter;[];[];[];[];[];[];[];nan;False;False;2;True
+K25_splitter;splitter;[];[];[];[];[];[];[];nan;False;False;2;True
+K27_splitter;splitter;[];[];[];[];[];[];[];nan;False;False;2;True
+K29_splitter;splitter;[];[];[];[];[];[];[];nan;False;False;2;True
+K31_splitter;splitter;[];[];[];[];[];[];[];nan;False;False;2;True
+K33_splitter;splitter;[];[];[];[];[];[];[];nan;False;False;2;True
+K35_splitter;splitter;[];[];[];[];[];[];[];nan;False;False;2;True
+K37_splitter;splitter;[];[];[];[];[];[];[];nan;False;False;2;True
+K39_splitter;splitter;[];[];[];[];[];[];[];nan;False;False;2;True
+K41_splitter;splitter;[];[];[];[];[];[];[];nan;False;False;2;True
+K43_splitter;splitter;[];[];[];[];[];[];[];nan;False;False;2;True
