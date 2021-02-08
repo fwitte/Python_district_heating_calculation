@@ -9,13 +9,13 @@ import contextily as ctx
 import matplotlib.pyplot as plt
 from geopandas import GeoDataFrame
 
-from tespy.components import source, sink, heat_exchanger_simple, pipe
-from tespy.connections import connection, bus, ref
-from tespy.networks import network
+from tespy.components import Source, Sink, HeatExchangerSimple, Pipe
+from tespy.connections import Connection, Bus, Ref
+from tespy.networks import Network
 
-from sub_consumer import (lin_consum_closed as lc,
-                          lin_consum_open as lo,
-                          fork as fo)
+from sub_consumer import (LinConsumClosed as lc,
+                          LinConsumOpen as lo,
+                          Fork as fo)
 
 
 
@@ -56,7 +56,7 @@ def Get_age_ID_pipe(df_pipes):
 def Get_ID(df_users):
     return(df_users
          .assign(USER_ID = df_users.index+1))
-         
+
 def ckdnearest(gdfA, gdfB, gdfB_cols=['ID']):
     A = np.concatenate(
         [np.array(geom.coords) for geom in gdfA.geometry.to_list()])
@@ -74,12 +74,12 @@ def ckdnearest(gdfA, gdfB, gdfB_cols=['ID']):
 
 def Get_coords(df_pipes,df_users):
         return(df_pipes
-        
+
         .assign(node_ups = gpd.GeoSeries([Point(list(pt['geometry'].coords)[0]) for i,pt in df_pipes.iterrows()]))
         .assign(node_dws = gpd.GeoSeries([Point(list(pt['geometry'].coords)[-1]) for i,pt in df_pipes.iterrows()]))
         .merge(df_users[["ID","USER_ID"]] , left_on='ID', right_on='ID',how="outer")
-    )    
- 
+    )
+
 def getLineCoords(row, geom, coord_type):
     """Returns a list of coordinates ('x' or 'y') of a LineString geometry"""
     if coord_type == 'x':
@@ -95,13 +95,13 @@ def DHS_map(pipes,users,start_pipe_ID,linewidth_factor = 1/30, markersize_users_
     plant = gpd.GeoDataFrame(plant, geometry="node_ups")
     fig, ax = plt.subplots(figsize=(15,15))
     pipes_g.plot(column=color_presentation,cmap='RdYlGn_r',
-            ax=ax, 
+            ax=ax,
             legend=True,
             legend_kwds={'label': color_presentation,'orientation': "vertical"},
             linewidth=pipes[linewidth_column]*linewidth_factor)
     ax.set_axis_off()
     users_g.plot(color="blue",
-            ax=ax, 
+            ax=ax,
             markersize=users["Power"]*markersize_users_factor)
     if cons_annotation == True:
         users.apply(lambda x: ax.annotate(text=round(x[cons_annotation_column],1), xy=x.geometry.centroid.coords[0], xytext=(10,10), textcoords = "offset points",arrowprops=dict(arrowstyle="->")),axis=1)
@@ -109,7 +109,7 @@ def DHS_map(pipes,users,start_pipe_ID,linewidth_factor = 1/30, markersize_users_
         pass
 
     plant.plot(marker='*',ax=ax, color='black', markersize=markersize_plant)
-    plant.apply(lambda x: ax.annotate(text="Plant", xy=x.node_ups.centroid.coords[0], xytext=(50,0), textcoords = "offset points", arrowprops=dict(arrowstyle="<->") ),axis=1); 
+    plant.apply(lambda x: ax.annotate(text="Plant", xy=x.node_ups.centroid.coords[0], xytext=(50,0), textcoords = "offset points", arrowprops=dict(arrowstyle="<->") ),axis=1);
 
     ctx.add_basemap(ax,url=ctx.sources.OSM_C, zoom=16)
     plt.show()
@@ -120,7 +120,7 @@ def selection_tool(df_pipes,df_users):
     # Create the color mapper
     color_mapper = LogColorMapper(palette=palette)
 
-    
+
     df_pipes['x'] = df_pipes.apply(getLineCoords, geom='geometry', coord_type='x', axis=1)
     df_pipes['y'] = df_pipes.apply(getLineCoords, geom='geometry', coord_type='y', axis=1)
     df_nodes=df_pipes[["ID","node_ups"]].copy()
@@ -136,7 +136,7 @@ def selection_tool(df_pipes,df_users):
 
     #defining x,y and ID for upstream nodes and source
     n_df = df_nodes[['ID',"x","y"]].copy()
-    
+
     def node_coords(n_df):
         n_df['x'] = n_df['x'].str.get(0)
         n_df['y'] = n_df['y'].str.get(0)
@@ -231,7 +231,7 @@ def selection_tool(df_pipes,df_users):
 
 
     p1.multi_line('x', 'y', source=msource, color='gray', line_width=3)
-    
+
     my_hover = HoverTool()
     my_hover.tooltips = [('ID', '@ID'), ('Diameter', '@DIMENSION'), ('Year', '@BUILD_DATE'),('Next', '@PipeNext'),('Previous', '@Previous')]
     p1.add_tools(my_hover)
@@ -243,7 +243,7 @@ def selection_tool(df_pipes,df_users):
     show(layout, browser=None, new='tab', notebook_handle=False)
 
 
- 
+
 
 
 def get_selected_pipes(df_pipes,path,name_downloaded):
@@ -297,7 +297,7 @@ def calculation_pipes(selected_pipes,df_pipes,df_users):
 
 
 
-    df_pipes_c['ID'] = df_pipes_c['ID'].astype(int)   
+    df_pipes_c['ID'] = df_pipes_c['ID'].astype(int)
 
     return(df_pipes_c,df_users_c)
 
@@ -320,13 +320,13 @@ def pipes_characteristics(df_pipe_data,Roughness,df_pipes_c):
     df_pipes_data["DIMENSION"]=df_pipes_data["DIMENSION"].astype(str)
     df_pipes_data["type"]=df_pipes_data["DIMENSION"]+df_pipes_data["POSITION"]
 
-    
+
 
     df_pipes_data=pd.merge(df_pipes_data, df_pipe_data, left_on='type', right_on='type',how="outer")
 
     df_pipes_data = df_pipes_data[df_pipes_data['ID'].notna()]
 
-    
+
     df_pipes_data["Roughness"]=df_pipes_data["Roughness"]*(1.05)**df_pipes_data["Age"]
     df_pipes_data["Ch"]=df_pipes_data["Ch"]*(1.01)**df_pipes_data["Age"]
     df_pipes_data["Ch"]=(df_pipes_data["Ch"]+0.3)*15
@@ -335,7 +335,7 @@ def pipes_characteristics(df_pipe_data,Roughness,df_pipes_c):
 
 
     df_pipes_data["Diameter"]=df_pipes_data["DIMENSION"].map(Diameter)
-    
+
     Roughness[0] = Roughness[0].astype(str)
 
     Roughness = Roughness.set_index([0])
@@ -367,19 +367,20 @@ def check_downstream(pipe_id, pipes):
     endpoint = pipes.loc[pipe_id, 'node_dws']
     next_ids = list(pipes.loc[pipes['node_ups'] == endpoint]['ID'])
     reversed_ids = list(pipes[(pipes['node_dws'] == endpoint) & (pipes['ID'] != pipe_id)]['ID'])
-    
+
     for rev_id in reversed_ids:
         pipes.loc[rev_id, 'node_ups'], pipes.loc[rev_id, 'node_dws'] = pipes.loc[rev_id, 'node_dws'], pipes.loc[rev_id, 'node_ups']
     next_ids = next_ids + reversed_ids
 
     pipes.at[pipe_id, 'pipeNext'] = next_ids
-   
+
     for nxt_id in next_ids:
+        print(nxt_id)
         pipes.loc[nxt_id, 'pipePrevious'] = pipe_id
         check_downstream(nxt_id, pipes)
 
 def get_forks_data(df_connections):
-    
+
     df_connections["fork"]=df_connections["pipeNext"].astype(str)
     df_connections["fork"]=df_connections["fork"].str.contains(",", regex=False)
     len_df_forks=3*len(df_connections["fork"]==True)
@@ -525,34 +526,34 @@ def get_pipe_fork_connections(df_connections):
     df_pipe_fork=df_connections.copy()
     df_pipe_fork = df_pipe_fork[df_pipe_fork['ID_next'].apply(lambda x: type(x) == str)]
     return(df_pipe_fork)
- 
+
 #defining pipe feed
 def pipe_feed_definition(df_pipes_data):
     pf = {}
 
-    for index, row in df_pipes_data.iterrows(): 
+    for index, row in df_pipes_data.iterrows():
         #pipe_name = "pipe" + str(row["ID"]) + "_feed"
         ks = row["Roughness"]
         L = row["LENGTH"]
         D = row["Diameter"]
         kA = row["Ch"]
 
-        pf[row['ID']] = pipe("pipe" + str(row["ID"]) + "_feed", ks = ks, L = L, D = D, kA = kA)
+        pf[row['ID']] = Pipe("pipe" + str(row["ID"]) + "_feed", ks = ks, L = L, D = D, kA = kA)
     return pf
 
 
-#defining return pipes   
+#defining return pipes
 def pipe_return_definition(df_pipes_data):
-    pb = {}    
+    pb = {}
 
-    for index, row in df_pipes_data.iterrows(): 
+    for index, row in df_pipes_data.iterrows():
         #pipe_name_back = "pipe" + str(row["ID"]) + "_back"
         ks = row["Roughness"]
         L = row["LENGTH"]
         D = row["Diameter"]
         kA = row["Ch"]
 
-        pb[row['ID']] = pipe("pipe" + str(row["ID"]) + "_back", ks = ks, L = L, D = D, kA = kA)
+        pb[row['ID']] = Pipe("pipe" + str(row["ID"]) + "_back", ks = ks, L = L, D = D, kA = kA)
     return pb
 
 
@@ -561,7 +562,7 @@ def pipe_return_definition(df_pipes_data):
 def forks(df_forks_data):
     k = {}
 
-    for index, row in df_forks_data.iterrows(): 
+    for index, row in df_forks_data.iterrows():
         fork_name = "K" + str(row["ID"])
 
 
@@ -577,90 +578,90 @@ def consumers(end_pipes):
     cons = {}
 
 
-    for index, row in end_pipes.iterrows(): 
+    for index, row in end_pipes.iterrows():
         cons_name = "consumer" + str(int(row["USER_ID"]))
 
-        cons[int(row['USER_ID'])] = heat_exchanger_simple(cons_name)
+        cons[int(row['USER_ID'])] = HeatExchangerSimple(cons_name)
         cons[int(row["USER_ID"])].set_attr(Q=-row["Power"])
     return cons
 
 
 def define_connections_so_start(start_pipe_ID,pf,so):
     start=pf[start_pipe_ID]
-    so_start = connection(so, 'out1', start, 'in1',  fluid={'water': 1})
+    so_start = Connection(so, 'out1', start, 'in1',  fluid={'water': 1})
     return so_start
 
 
-def define_connections_start_si(start_pipe_ID,pb,si):        
-    end=pb[start_pipe_ID] 
-    start_si = connection(end, 'out1', si, 'in1')
+def define_connections_start_si(start_pipe_ID,pb,si):
+    end=pb[start_pipe_ID]
+    start_si = Connection(end, 'out1', si, 'in1')
     return start_si
 
 
 def define_connections_pipe_pipe_feed(df_pipe_pipe,pf):
-    pipe_pipe_f = {}  
+    pipe_pipe_f = {}
     df_pipe_pipe["ID"]=df_pipe_pipe["ID"].astype(int)
-    for index, row in df_pipe_pipe.iterrows(): 
-        pipe_pipe_f[row["ID"]]=connection(pf[row["ID"]], "out1", pf[row["ID_next"]], "in1")    
+    for index, row in df_pipe_pipe.iterrows():
+        pipe_pipe_f[row["ID"]]=Connection(pf[row["ID"]], "out1", pf[row["ID_next"]], "in1")
     return pipe_pipe_f
 
 
 def define_connections_pipe_pipe_back(df_pipe_pipe,pb):
-    pipe_pipe_b = {}  
+    pipe_pipe_b = {}
     df_pipe_pipe["ID_next"]=df_pipe_pipe["ID_next"].astype(int)
-    for index, row in df_pipe_pipe.iterrows(): 
-        pipe_pipe_b[row["ID_next"]]=connection(pb[row["ID_next"]], "out1", pb[row["ID"]], "in1")
+    for index, row in df_pipe_pipe.iterrows():
+        pipe_pipe_b[row["ID_next"]]=Connection(pb[row["ID_next"]], "out1", pb[row["ID"]], "in1")
     return pipe_pipe_b
 
 
 def define_connections_pipe_user(df_pipe_user,end_pipes,pf,cons):
-    pipe_user = {}  
+    pipe_user = {}
     df_pipe_user["USER_ID"]=df_pipe_user["USER_ID"].astype(int)
-    for index, row in end_pipes.iterrows():    
-        pipe_user[int(row["ID"])]=connection(pf[row["ID"]], "out1", cons[row["USER_ID"]], "in1", design=["T"])
+    for index, row in end_pipes.iterrows():
+        pipe_user[int(row["ID"])]=Connection(pf[row["ID"]], "out1", cons[row["USER_ID"]], "in1", design=["T"])
     return pipe_user
 
 
-def define_connections_user_pipe(end_pipes,pb,cons,pipe_user):    
-    user_pipe = {}     
-    for index, row in end_pipes.iterrows(): 
-        user_pipe[int(row["USER_ID"])]=connection(cons[row["USER_ID"]], "out1", pb[row["ID"]], "in1", p=ref(pipe_user[row["ID"]], 1, row["p_drop"]))
+def define_connections_user_pipe(end_pipes,pb,cons,pipe_user):
+    user_pipe = {}
+    for index, row in end_pipes.iterrows():
+        user_pipe[int(row["USER_ID"])]=Connection(cons[row["USER_ID"]], "out1", pb[row["ID"]], "in1", p=ref(pipe_user[row["ID"]], 1, row["p_drop"]))
     return user_pipe
 
 
 def define_connections_fork_pipe_1_feed(df_fork_pipe,k,pf):
     df_fork_pipe["Valve"]=df_fork_pipe["ForkExit"]-1
     df_fork_pipe1=df_fork_pipe.loc[df_fork_pipe["ForkExit"]==1]
-    fork_pipe_f1 = {}  
-    for index, row in df_fork_pipe1.iterrows(): 
-        fork_pipe_f1[row["ID_next"]]=connection(k[row["ID_previous"]].comps["splitter"], "out"+str(row["ForkExit"]), pf[row["ID_next"]], "in1")
+    fork_pipe_f1 = {}
+    for index, row in df_fork_pipe1.iterrows():
+        fork_pipe_f1[row["ID_next"]]=Connection(k[row["ID_previous"]].comps["splitter"], "out"+str(row["ForkExit"]), pf[row["ID_next"]], "in1")
     return fork_pipe_f1
 
 
 def define_connections_fork_pipe_1_back(df_fork_pipe,k,pb):
     df_fork_pipe["Valve"]=df_fork_pipe["ForkExit"]-1
     df_fork_pipe1=df_fork_pipe.loc[df_fork_pipe["ForkExit"]==1]
-    fork_pipe_b1 = {}  
-    for index, row in df_fork_pipe1.iterrows(): 
-        fork_pipe_b1[row["ID_next"]]=connection(pb[row["ID_next"]], "out1", k[row["ID_previous"]].comps["valve_"+str(row["Valve"])], "in1")
+    fork_pipe_b1 = {}
+    for index, row in df_fork_pipe1.iterrows():
+        fork_pipe_b1[row["ID_next"]]=Connection(pb[row["ID_next"]], "out1", k[row["ID_previous"]].comps["valve_"+str(row["Valve"])], "in1")
     return fork_pipe_b1
 
 
 def define_connections_fork_pipe_2_feed(df_fork_pipe,k,pf):
     df_fork_pipe["Valve"]=df_fork_pipe["ForkExit"]-1
-    df_fork_pipe2=df_fork_pipe.loc[df_fork_pipe["ForkExit"]==2]    
-    fork_pipe_f2 = {}      
-    for index, row in df_fork_pipe2.iterrows(): 
-        fork_pipe_f2[row["ID_next"]]=connection(k[row["ID_previous"]].comps["splitter"], "out"+str(row["ForkExit"]), pf[row["ID_next"]], "in1")   
+    df_fork_pipe2=df_fork_pipe.loc[df_fork_pipe["ForkExit"]==2]
+    fork_pipe_f2 = {}
+    for index, row in df_fork_pipe2.iterrows():
+        fork_pipe_f2[row["ID_next"]]=Connection(k[row["ID_previous"]].comps["splitter"], "out"+str(row["ForkExit"]), pf[row["ID_next"]], "in1")
     return fork_pipe_f2
 
 
 def define_connections_fork_pipe_2_back(df_fork_pipe,k,pb):
     df_fork_pipe["Valve"]=df_fork_pipe["ForkExit"]-1
-    df_fork_pipe2=df_fork_pipe.loc[df_fork_pipe["ForkExit"]==2]    
-    fork_pipe_b2 = {}  
-    for index, row in df_fork_pipe2.iterrows(): 
-        fork_pipe_b2[row["ID_next"]]=connection(pb[row["ID_next"]], "out1", k[row["ID_previous"]].comps["valve_"+str(row["Valve"])], "in1")
+    df_fork_pipe2=df_fork_pipe.loc[df_fork_pipe["ForkExit"]==2]
+    fork_pipe_b2 = {}
+    for index, row in df_fork_pipe2.iterrows():
+        fork_pipe_b2[row["ID_next"]]=Connection(pb[row["ID_next"]], "out1", k[row["ID_previous"]].comps["valve_"+str(row["Valve"])], "in1")
     return fork_pipe_b2
 
 
@@ -669,9 +670,9 @@ def define_connections_pipe_fork_feed(df_pipe_fork,df_fork_pipe,k,pf):
     df_pipe_fork_nextnext=df_pipe_fork_nextnext[["ID_x","ID_previous_x","ID_next_x","ID_next_y"]]
     df_pipe_fork_nextnext=df_pipe_fork_nextnext.rename(columns={"ID_x":"ID","ID_previous_x":"ID_previous", "ID_next_x":"ID_next", "ID_next_y":"ID_next_next"})
     df_pipe_fork_nextnext=df_pipe_fork_nextnext.iloc[::2,:]
-    pipe_fork_f = {}  
-    for index, row in df_pipe_fork_nextnext.iterrows():     
-        pipe_fork_f[row["ID"]]=connection(pf[row["ID"]], "out1", k[row["ID"]].comps["splitter"], "in1")
+    pipe_fork_f = {}
+    for index, row in df_pipe_fork_nextnext.iterrows():
+        pipe_fork_f[row["ID"]]=Connection(pf[row["ID"]], "out1", k[row["ID"]].comps["splitter"], "in1")
     return pipe_fork_f
 
 def define_connections_pipe_fork_back(df_pipe_fork,df_fork_pipe,k,pb,fork_pipe_b1):
@@ -680,8 +681,8 @@ def define_connections_pipe_fork_back(df_pipe_fork,df_fork_pipe,k,pb,fork_pipe_b
     df_pipe_fork_nextnext=df_pipe_fork_nextnext.rename(columns={"ID_x":"ID","ID_previous_x":"ID_previous", "ID_next_x":"ID_next", "ID_next_y":"ID_next_next"})
     df_pipe_fork_nextnext=df_pipe_fork_nextnext.iloc[::2,:]
     pipe_fork_b = {}
-    for index, row in df_pipe_fork_nextnext.iterrows(): 
-        pipe_fork_b[row["ID"]]=connection(k[row["ID"]].comps["merge"], "out1", pb[row["ID"]], "in1", p=ref(fork_pipe_b1[row["ID_next_next"]], 1, -5e4))
+    for index, row in df_pipe_fork_nextnext.iterrows():
+        pipe_fork_b[row["ID"]]=Connection(k[row["ID"]].comps["merge"], "out1", pb[row["ID"]], "in1", p=ref(fork_pipe_b1[row["ID_next_next"]], 1, -5e4))
     return pipe_fork_b
 
 def add_connections(nw,so_start,start_si,pipe_pipe_f,pipe_pipe_b,pipe_user,user_pipe,fork_pipe_f1,fork_pipe_b1,fork_pipe_f2,fork_pipe_b2,pipe_fork_f,pipe_fork_b):
@@ -723,7 +724,7 @@ def get_results(df_pipes_c,end_pipes,df_users_c,pf,user_pipe,pipe_user,df_users)
 def print_results(heat_consumer,heat_losses,so_start):
     return(
     print("PRINTED RESULTS:\n"
-          'Heat demand consumer:', round(heat_consumer.P.val/1000,2), "kW","\n", 
+          'Heat demand consumer:', round(heat_consumer.P.val/1000,2), "kW","\n",
           'Network losses:', round(heat_losses.P.val/1000,2), "kW\n",
           'Network losses:',round(heat_losses.P.val/(heat_consumer.P.val+heat_losses.P.val)*100,2), "%\n",
           "Source feed temperature:", round(so_start.T.val,2), "°C\n",

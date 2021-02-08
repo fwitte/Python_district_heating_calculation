@@ -1,0 +1,11 @@
+notebook
+numpy
+pandas
+geopandas
+pyshp
+matplotlib
+tespy
+folium
+pysal
+contextily
+bokeh
